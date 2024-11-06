@@ -92,16 +92,14 @@ class AsyncWebSocketApp(object):
             logger.error([type(ex), ex])
 
         except ConnectionClosedError as e:
-            logger.error(f'Connection closed with error: {e}')
+            # logger.error(f'Connection closed with error: {e}')
             await self.disconnect()
             raise e
 
     async def _reconnect(self, info: RetryInfo) -> None:
         logger.error(
             format_msg(
-                'socket error %s, reconnecting %s...',
-                repr_exception(info.exception),
-                info.fails
+                f'socket error {info.exception}, reconnecting {info.fails}...',
             )
         )
 

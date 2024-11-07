@@ -21,7 +21,7 @@ from aioretry import (
 
 logger = logging.getLogger('async_websocket_client')
 MSG_PREFIX = "[AioWebsocket] "
-ATOM_RETRY_DELAY = 0.1
+ATOM_RETRY_DELAY = 0.3
 MAX_RETRIES_BEFORE_RESET = 10
 
 def DEFAULT_RETRY_POLICY(info: RetryInfo) -> RetryPolicyStrategy:

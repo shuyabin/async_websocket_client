@@ -20,7 +20,7 @@ A module that implements an asynchronous interface based on [websockets](https:/
 ## Quick start
 
 Установка:
-
+   
 ```sh
 pip install async-websocket-client
 ```

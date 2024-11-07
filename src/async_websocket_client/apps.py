@@ -8,12 +8,28 @@ import websockets
 from websockets.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosedError
 
-from async_websocket_client.dispatchers import BaseDispatcher
+from .dispatchers import BaseDispatcher
+
+from aioretry import (
+    RetryPolicy,
+    RetryInfo,
+    retry
+)
 
 # from sdk.client import BaseDispatcher
 
 
 logger = logging.getLogger('async_websocket_client')
+MSG_PREFIX = "[AioWebsocket] "
+ATOM_RETRY_DELAY = 0.3
+MAX_RETRIES_BEFORE_RESET = 10
+
+
+def DEFAULT_RETRY_POLICY(info: RetryInfo) -> RetryPolicyStrategy:
+    return (
+        False,
+        (info.fails - 1) % MAX_RETRIES_BEFORE_RESET * ATOM_RETRY_DELAY
+    )
 
 
 class AsyncWebSocketApp(object):
@@ -27,7 +43,7 @@ class AsyncWebSocketApp(object):
         self.url = url
         self.dispatcher = dispatcher
         self.dispatcher.set_app(self)
-
+        self._retry_policy: RetryPolicy = DEFAULT_RETRY_POLICY
         self.is_running = False
 
     async def connect(self):
@@ -63,6 +79,10 @@ class AsyncWebSocketApp(object):
 
             await self.dispatcher.on_message(message)
 
+    @retry(
+        retry_policy='_retry_policy',
+        before_retry='_reconnect'
+    )
     async def run(self):
         await self.connect()
 
@@ -73,9 +93,16 @@ class AsyncWebSocketApp(object):
             logger.error([type(ex), ex])
 
         except ConnectionClosedError as e:
-            logger.error(f'Connection closed with error: {e}')
+            # logger.error(f'Connection closed with error: {e}')
+            await self.disconnect()
+            raise e
 
-        await self.disconnect()
+    async def _reconnect(self, info: RetryInfo) -> None:
+        logger.error(
+            format_msg(
+                f'socket error {info.exception}, reconnecting {info.fails}...',
+            )
+        )
 
     def asyncio_run(self):
         try:
@@ -83,3 +110,17 @@ class AsyncWebSocketApp(object):
 
         except KeyboardInterrupt:
             logger.info('Correct exit')
+
+
+def format_msg(string, *args) -> str:
+    return MSG_PREFIX + string % args
+
+
+def repr_exception(e: Exception) -> str:
+    """Better stringify an exception
+    """
+
+    s = str(e)
+    class_name = type(e).__name__
+
+    return class_name if not s else f'{class_name}: {s}'

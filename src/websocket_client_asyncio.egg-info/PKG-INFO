@@ -1,3 +1,13 @@
+Metadata-Version: 2.1
+Name: websocket_client_asyncio
+Version: 1.1.3
+Summary: async_websocket_client
+Author: small_shushu
+Requires-Python: >=3.7, <4
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: aioretry
+
 # Async WebSocket client
 
 A module that implements an asynchronous interface based on [websockets](https://github.com/python-websockets/websockets) for working with websockets
